@@ -15,12 +15,13 @@ if data_type=="orderbook":
     db_name = "sqlite:///"+orderbook_dir+"/data.db"
     if not os.path.exists(orderbook_dir):
         os.makedirs(orderbook_dir)
-elif data_type=="orderbook":
+elif data_type=="candles":
     candles_dir = "./candles"
     table_name = "candles"
+    db_name = "sqlite:///"+candles_dir+"/data.db"
     if not os.path.exists(candles_dir):
         os.makedirs(candles_dir)
-    db_name = "sqlite:///"+candles_dir+"/data.db"
+    
 else:
     raise ValueError("Invalid argument: '"+data_type+"'.")
 

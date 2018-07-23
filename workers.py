@@ -1,3 +1,4 @@
+import numpy as np
 import ccxt
 from threading import Thread
 import time
@@ -16,83 +17,110 @@ class ExchangeWorker(Thread):
         self.symbols = symbols
         self.symbol_freq = symbol_freq
         self.req_freq = req_freq
-        client = getattr(ccxt, exchange.lower())()
+        self.client = getattr(ccxt, exchange.lower())()
         db = dataset.connect(db_name)
-        table = db[table_name]
         if data_type.lower() == "candles":
-            self.data = Candles(exchange, client, mutex, barrier, table)
+            self.data = Candles(exchange, self.client, mutex, barrier, db, table_name)
         elif data_type.lower() == "orderbook":
-            self.data = OrderBook(exchange, client, mutex, barrier, table)
+            self.data = OrderBook(exchange, self.client, mutex, barrier, db, table_name)
         else:
             raise("Invalid data_type")
     
     def run(self):
         
-        start_req_time = time.time()
-        start_symbol_time = time.time()
+        # start_symbol_time = time.time()
         while True:
             
-            if int(time.time()-start_symbol_time) > self.symbol_freq:
+            # if int(time.time()-start_symbol_time) > self.symbol_freq:
 
-                start_symbol_time = time.time()
-                for symbol in self.symbols:
+            #     start_symbol_time = time.time()
+            for symbol in self.symbols:
 
-                    while int(time.time()-start_req_time) <= self.req_freq:
-                        pass
-
-                    if int(time.time()-start_req_time) > self.req_freq:
-                        self.require_data(symbol)
-
-                        start_req_time = time.time()       
+                # while int(time.time()-start_req_time) <= self.req_freq:
+                start_req_time = time.time()
+                while int(time.time()-start_req_time) <= self.client.rateLimit/1000:
+                    pass
+                self.require_data(symbol)
+                
 
     def require_data(self,symbol):
         self.data.request(symbol)
 
+
 class Data(object):
 
-    """Data: Generic class to request data from exchanges"""
+    """Data: Generic class to request data from exchanges.
+    """
 
     __metaclass__ = ABCMeta
 
-    def __init__(self, exchange, client, mutex, barrier, table):
+    def __init__(self, exchange, client, mutex, barrier, db, table_name):
         self.exchange = exchange
         self.client = client
         self.mutex = mutex
         self.barrier = barrier
-        self.table = table
+        self.db = db
+        self.table_name = table_name
 
     @abstractmethod
     def request(self, symbol):
         pass
     
-    def store(self, data):
+    def store(self, symbol, data):
         self.mutex.acquire()
-        self.table.insert(data)
-        self.mutex.release()        
+        self.db[self.table_name+symbol.replace("/", "")+self.exchange].insert(data)
+        self.mutex.release()
+
 
 class Candles(Data):
 
-    """Candles: A class to request candles data from exchange"""
+    """Candles: A class to request candles data from exchange.
+    Runs all time because different exchanges returns more or less candles.
+    This way, we standarize the request.
+    """
+
+    def __init__(self, exchange, client, mutex, barrier, db, table_name):
+        super(Candles, self).__init__(exchange, client, mutex, barrier, db, table_name)
+        self.last_datetime = 0
 
     def request(self, symbol):
         self.barrier.wait()
         try:
-            candles = self.client.fetch_ohlcv(symbol, "1m")
-            dummy = 0
-            data = {"datetime": dummy,
-                    "symbol": symbol,
-                    "exchange": self.exchange,
-                    "open": dummy,
-                    "high": dummy,
-                    "low": dummy,
-                    "close": dummy,
-                    "volume": dummy}
-            self.store(data)
+            n_candles = 10
+            candles = self.client.fetch_ohlcv(symbol=symbol, 
+                                              timeframe="1m",
+                                              since=self.client.milliseconds()-n_candles*60*1000, 
+                                              limit=n_candles)
+            candles = np.array(candles)
+            
+            # discard last candle: yet incomplete
+            candles = np.delete(candles, -1, 0)
+            
+            # remove old values
+            for time in candles.transpose()[0]:
+                if time <= self.last_datetime:
+                    candles = np.delete(candles, 0, 0)
+                       
+            # if new values
+            if len(candles)>0:
+
+                # update last datetime
+                self.last_datetime = candles[-1][0]
+                
+                for candle in candles:
+                    data = {"datetime": candle[0],
+                            # "symbol": symbol,
+                            # "exchange": self.exchange,
+                            "open":candle[1],
+                            "high":candle[2],
+                            "low":candle[3],
+                            "close":candle[4],
+                            "volume":candle[5]}
+                    # store                
+                    self.store(symbol, data)
         except:
             # print("symbol: "+symbol+" not listed or request limit reached in: "+self.exchange)
             pass
-
-
 
 class OrderBook(Data):
 
@@ -103,11 +131,30 @@ class OrderBook(Data):
         try:
             book = self.client.fetch_order_book(symbol)
             data = {"datetime": book['datetime'],
-                    "symbol":symbol,
-                    "exchange":self.exchange,
-                    "bid":book['bids'][0][0],
-                    "ask":book['asks'][0][0]}
-            self.store(data)
+                    # "symbol":symbol,
+                    # "exchange":self.exchange,
+                    "bid_val_2":book['bids'][2][0],
+                    "bid_count_2":book['bids'][2][1],                    
+                    "bid_val_1":book['bids'][1][0],
+                    "bid_count_1":book['bids'][1][1],
+                    "bid_val_0":book['bids'][0][0],
+                    "bid_count_0":book['bids'][0][1],
+                    "ask_val_0":book['asks'][0][0],
+                    "ask_count_0":book['asks'][0][1],
+                    "ask_val_1":book['asks'][1][0],
+                    "ask_count_1":book['asks'][1][1],
+                    "ask_val_2":book['asks'][2][0],
+                    "ask_count_2":book['asks'][2][1]}
+            self.store(symbol, data)
         except:
             # print("symbol: "+symbol+" not listed or request limit reached in: "+self.exchange)
             pass
+
+
+""" 
+# How to read datetime s [milliseconds]
+import datetime
+datetime.datetime.fromtimestamp(s/1000).strftime('%Y-%m-%d %H:%M:%S.%f')
+# with an array:
+time = datetime.apply(lambda x: datetime.fromtimestamp(x/1000.0))
+"""
