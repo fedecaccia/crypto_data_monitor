@@ -17,5 +17,5 @@ In your terminal, positioned in the crypto data monitor directory, type:
 ```bash
 python3 monitor.py <data_type>
 ```
-where <data_type> should be replaced by ```orderbook``` or ```candles```.
+where *<data_type>* should be replaced by ```orderbook``` or ```candles```.
 and the program will start downloading data in sql data bases located at ```/orderbook``` or ```/candles```.
