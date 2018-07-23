@@ -10,11 +10,12 @@ This program aims to be a helpful tool to download online market data from diffe
 ## Quickstart
 Crypto data monitor currently can be executed in two modes:
 
-- *orderbook* mode: requests bid/ask values from symbols and exchanges configured in settings.
-- *candes* mode: requests open/high/low/close/volume values from symbols and exchanges configured in settings.
+- ```orderbook``` mode: requests *bid*/*ask* values from symbols and exchanges configured in settings.
+- ```candes``` mode: requests *open*/*high*/*low*/*close*/*volume* values from symbols and exchanges configured in settings.
 
 In your terminal, positioned in the crypto data monitor directory, type:
 ```bash
 python3 monitor.py <data_type>
 ```
-and the program will start downloading data in sql data bases located at /orderbook or /candles.
+where <data_type> should be replaced by ```orderbook``` or ```candles```.
+and the program will start downloading data in sql data bases located at ```/orderbook``` or ```/candles```.
