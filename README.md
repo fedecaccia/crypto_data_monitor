@@ -14,7 +14,7 @@ Crypto data monitor currently can be executed in two modes:
 - *candes* mode: requests open/high/low/close/volume values from symbols and exchanges configured in settings.
 
 In your terminal, positioned in the crypto data monitor directory, type:
-'''
+```bash
 python3 monitor.py <data_type>
-'''
+```
 and the program will start downloading data in sql data bases located at /orderbook or /candles.
