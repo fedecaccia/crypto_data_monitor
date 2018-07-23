@@ -1,5 +1,5 @@
 import ccxt
-from threading import Thread, Barrier
+from threading import Thread
 import time
 from datetime import datetime
 from abc import ABCMeta, abstractmethod
@@ -9,7 +9,8 @@ class ExchangeWorker(Thread):
 
     """ExchangeWorker: individual connection with an exchange to retrieve data"""
 
-    def __init__(self, exchange, symbols, symbol_freq, req_freq, data_type, mutex, db_name, table_name):
+    def __init__(self, exchange, symbols, symbol_freq, req_freq, data_type,
+                 mutex, barrier, db_name, table_name):
         
         Thread.__init__(self)
         self.symbols = symbols
@@ -19,9 +20,9 @@ class ExchangeWorker(Thread):
         db = dataset.connect(db_name)
         table = db[table_name]
         if data_type.lower() == "candles":
-            self.data = Candles(exchange, client, mutex, table)
+            self.data = Candles(exchange, client, mutex, barrier, table)
         elif data_type.lower() == "orderbook":
-            self.data = OrderBook(exchange, client, mutex, table)
+            self.data = OrderBook(exchange, client, mutex, barrier, table)
         else:
             raise("Invalid data_type")
     
@@ -53,10 +54,11 @@ class Data(object):
 
     __metaclass__ = ABCMeta
 
-    def __init__(self, exchange, client, mutex, table):
+    def __init__(self, exchange, client, mutex, barrier, table):
         self.exchange = exchange
         self.client = client
         self.mutex = mutex
+        self.barrier = barrier
         self.table = table
 
     @abstractmethod
@@ -82,6 +84,7 @@ class OrderBook(Data):
     """OrderBook: A class to request orderbook data from exchange"""
 
     def request(self, symbol):
+        self.barrier.wait()
         try:
             book = self.client.fetch_order_book(symbol)
             data = {"datetime": book['datetime'],
