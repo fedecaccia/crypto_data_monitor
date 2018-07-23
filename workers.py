@@ -75,8 +75,23 @@ class Candles(Data):
     """Candles: A class to request candles data from exchange"""
 
     def request(self, symbol):
-        # candles = self.client.fetch_ohlcv(symbol, "1m")
-        print("requesting candles")
+        self.barrier.wait()
+        try:
+            candles = self.client.fetch_ohlcv(symbol, "1m")
+            dummy = 0
+            data = {"datetime": dummy,
+                    "symbol": symbol,
+                    "exchange": self.exchange,
+                    "open": dummy,
+                    "high": dummy,
+                    "low": dummy,
+                    "close": dummy,
+                    "volume": dummy}
+            self.store(data)
+        except:
+            # print("symbol: "+symbol+" not listed or request limit reached in: "+self.exchange)
+            pass
+
 
 
 class OrderBook(Data):

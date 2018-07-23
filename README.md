@@ -13,7 +13,11 @@ Crypto data monitor currently can be executed in two modes:
 - ```orderbook``` mode: requests *bid*/*ask* values from symbols and exchanges configured in settings.
 - ```candes``` mode: requests *open*/*high*/*low*/*close*/*volume* values from symbols and exchanges configured in settings.
 
-In your terminal, positioned in the crypto data monitor directory, type:
+First, install dependencies. Positioned in the crypto data monitor directory, type:
+```bash
+pip3 install requirements.txt
+```
+Once dependencies have been insalled, run crypto data monitor in your preferred mode:
 ```bash
 python3 monitor.py <data_type>
 ```
