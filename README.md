@@ -15,7 +15,7 @@ Crypto data monitor currently can be executed in two modes:
 
 First, install dependencies. Positioned in the crypto data monitor directory, type:
 ```bash
-pip3 install requirements.txt
+pip3 install -r requirements.txt
 ```
 Once dependencies have been insalled, run crypto data monitor in your preferred mode:
 ```bash
