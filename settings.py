@@ -23,7 +23,7 @@ symbols = [
     "NEO/BTC",
     "DASH/BTC",
     "ETC/BTC",
-    "NEM/BTC",
+    "XEM/BTC",
     "XTZ/BTC",
     "VEN/BTC",
     "OMG/BTC",
