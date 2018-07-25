@@ -4,7 +4,7 @@ exchanges = ["Bitfinex",
              "Kraken",
              "Hitbtc",
              "Poloniex",
-             "Huobi",
+             "Huobipro",
              "Gdax",
              "Bitstamp",
              "Bitmex"]
