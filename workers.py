@@ -68,7 +68,7 @@ class Data(object):
     
     def store(self, symbol, data):
         self.mutex.acquire()
-        self.db[self.table_name+symbol.replace("/", "")+self.exchange].insert(data)
+        self.db[self.table_name+symbol.replace("/", "")+self.exchange.lower()].insert(data)
         self.mutex.release()
 
 
