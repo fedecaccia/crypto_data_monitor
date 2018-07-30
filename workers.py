@@ -134,7 +134,8 @@ class OrderBook(Data):
             bid_weight_val_2, bid_weight_count_2 = self.weighted_orders(book['bids'], limit=5)
             ask_weight_val_1, ask_weight_count_1 = self.weighted_orders(book['asks'], limit=10)
             ask_weight_val_2, ask_weight_count_2 = self.weighted_orders(book['asks'], limit=10)
-            data = {"datetime": book['datetime'],
+            # data = {"datetime": book['datetime'], # most exchanges return None
+            data = {"datetime": datetime.now(),
                     # "symbol":symbol,
                     # "exchange":self.exchange,
                     "bid_weight_val_1":bid_weight_val_1,
