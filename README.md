@@ -29,12 +29,13 @@ You can also start service typing:
 ```bash
 sh mongo_start.sh
 ```
+Also, make sure you are using `db_type="nosql"` in `settings.py` (otherwise, use `db_type="sql"`).
 Then run crypto data monitor in your preferred mode:
 ```bash
 python3 monitor.py <data_type>
 ```
-where *<data_type>* should be replaced by ```orderbook``` or ```candles```.
-and the program will start downloading data in sql data bases located at ```/orderbook``` or ```/candles```.
+where *<data_type>* should be replaced by `orderbook` or `candles`.
+and the program will start downloading data in sql data bases located at `/orderbook` or `/candles`.
 
 Using MongoDB databases, to reinit databases use the following script:
 ```bash

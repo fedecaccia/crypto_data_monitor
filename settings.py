@@ -63,6 +63,6 @@ symbols = [
     "LRC/BTC",
     "ZEN/BTC"
 ]
-database = "sql" # "sql" - "nosql"
+database_type = "sql" # "sql" - "nosql"
 symbol_freq = 10 # seg
 req_freq = 5 # seg
