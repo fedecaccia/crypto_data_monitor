@@ -11,3 +11,11 @@ mycol = mydb["BTCUSDbitfinex"]
 
 for x in mycol.find():
     print(x)
+
+"""
+To inspect NoSQL databases, in terminal:
+mongo
+show dbs # list and show memory usage
+use orderbook # switch
+db.dropDatabase() # eliminate
+"""
