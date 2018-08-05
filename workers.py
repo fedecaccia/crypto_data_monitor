@@ -9,14 +9,13 @@ class ExchangeWorker(Thread):
 
     """ExchangeWorker: individual connection with an exchange to retrieve data"""
 
-    def __init__(self, exchange, symbols, symbol_freq, req_freq, data_type, database_type,
+    def __init__(self, exchange, symbols, data_type, database_type,
                  mutex, barrier):
         
         Thread.__init__(self)
         self.symbols = symbols
-        self.symbol_freq = symbol_freq
-        self.req_freq = req_freq
         self.client = getattr(ccxt, exchange.lower())()
+        _ = self.client.load_markets()
         
         table_prefix = data_type
         directory = "./"+data_type
@@ -43,10 +42,6 @@ class ExchangeWorker(Thread):
         while True:
 
             for symbol in self.symbols:
-
-                start_req_time = time.time()
-                while int(time.time()-start_req_time) <= self.client.rateLimit/1000:
-                    pass
                 self.require_data(symbol)
 
     def require_data(self,symbol):

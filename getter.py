@@ -1,6 +1,8 @@
 from abc import ABCMeta, abstractmethod
 from datetime import datetime
 import numpy as np
+import time
+from ccxt.base.errors import DDoSProtection
 
 class Getter(object):
 
@@ -15,6 +17,7 @@ class Getter(object):
         self.mutex = mutex
         self.barrier = barrier
         self.db = db
+        self.last_request_time = 0
 
     @abstractmethod
     def request(self, symbol):
@@ -38,7 +41,8 @@ class Candles(Getter):
         self.last_datetime = 0
 
     def request(self, symbol):
-        self.barrier.wait()
+
+        self.synchronize()
         n_candles = 10
         
         try:            
@@ -46,10 +50,14 @@ class Candles(Getter):
                                               timeframe="1m",
                                               since=self.client.milliseconds()-n_candles*60*1000, 
                                               limit=n_candles)
+            self.last_request_time = time.time()
             candles = np.array(candles)
             
             # discard last candle: yet incomplete
             candles = np.delete(candles, -1, 0)
+        except DDoSProtection:
+            self.last_request_time = time.time()
+            print("WARNING: DDOS Protection. ERROR rate limit.")
         except:
             # print("symbol: "+symbol+" not listed or request limit reached in: "+self.exchange)
             pass
@@ -81,10 +89,19 @@ class OrderBook(Getter):
 
     """OrderBook: A class to request orderbook data from exchange"""
 
+    def __init__(self, exchange, client, mutex, barrier, db):
+        super(OrderBook, self).__init__(exchange, client, mutex, barrier, db)
+
     def request(self, symbol):
-        self.barrier.wait()
+        
+        self.synchronize()
+        
         try:
-            book = self.client.fetch_order_book(symbol)        
+            book = self.client.fetch_order_book(symbol)
+            self.last_request_time = time.time()
+        except DDoSProtection:
+            self.last_request_time = time.time()
+            print("WARNING: DDOS Protection. ERROR rate limit.")
         except:
             # print("symbol: "+symbol+" not listed or request limit reached in: "+self.exchange)
             book = None
@@ -121,9 +138,9 @@ class OrderBook(Getter):
             return False
         if book == []:
             return False
-        if len(book['bids'])<2:
+        if len(book['bids'])<3:
             return False
-        if len(book['asks'])<2:
+        if len(book['asks'])<3:
             return False
         return True
 
@@ -146,6 +163,10 @@ class OrderBook(Getter):
 
         return weighted_value, count
      
+    def synchronize(self):
+        while (time.time() - self.last_request_time)<self.client.rateLimit/1000:
+            pass
+        self.barrier.wait()
 
 
 """ 
