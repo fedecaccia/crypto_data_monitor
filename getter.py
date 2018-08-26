@@ -57,11 +57,13 @@ class Candles(Getter):
             candles = np.delete(candles, -1, 0)
         except DDoSProtection:
             self.last_request_time = time.time()
+            candles = None
             print("WARNING: DDOS Protection. ERROR rate limit.")
         except:
             # print("symbol: "+symbol+" not listed or request limit reached in: "+self.exchange)
+            candles = None
             pass
-        finally:
+        else:
             # remove old values
             for time in candles.transpose()[0]:
                 if time <= self.last_datetime:
@@ -100,6 +102,7 @@ class OrderBook(Getter):
             book = self.client.fetch_order_book(symbol)
             self.last_request_time = time.time()
         except DDoSProtection:
+            book = None
             self.last_request_time = time.time()
             print("WARNING: DDOS Protection. ERROR rate limit.")
         except:
