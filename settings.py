@@ -63,7 +63,7 @@ symbols = [
 #     "LRC/BTC",
 #     "ZEN/BTC"
 # ]
-database_type = "nosql" # "csv" - "sql" - "nosql"
+database_type = "csv" # "csv" - "sql" - "nosql"
 
 exchanges = ["Bitfinex",
              "Bittrex",
