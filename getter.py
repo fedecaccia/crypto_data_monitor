@@ -28,6 +28,11 @@ class Getter(object):
         self.db.insert(self.exchange, symbol, data)
         self.mutex.release()
 
+    def synchronize(self):
+        while (time.time() - self.last_request_time)<self.client.rateLimit/1000:
+            pass
+        self.barrier.wait()
+
 
 class Candles(Getter):
 
@@ -65,8 +70,8 @@ class Candles(Getter):
             pass
         else:
             # remove old values
-            for time in candles.transpose()[0]:
-                if time <= self.last_datetime:
+            for t in candles.transpose()[0]:
+                if t <= self.last_datetime:
                     candles = np.delete(candles, 0, 0)
                        
             # if new values
@@ -76,9 +81,7 @@ class Candles(Getter):
                 self.last_datetime = candles[-1][0]
                 
                 for candle in candles:
-                    data = {"datetime": candle[0],
-                            # "symbol": symbol,
-                            # "exchange": self.exchange,
+                    data = {"datetime": datetime.fromtimestamp(candle[0]/1000).strftime('%Y-%m-%d %H:%M:%S.%f'),
                             "open":candle[1],
                             "high":candle[2],
                             "low":candle[3],
@@ -165,17 +168,3 @@ class OrderBook(Getter):
             print(self.exchange, book)
 
         return weighted_value, count
-     
-    def synchronize(self):
-        while (time.time() - self.last_request_time)<self.client.rateLimit/1000:
-            pass
-        self.barrier.wait()
-
-
-""" 
-# How to read datetime s [milliseconds]
-import datetime
-datetime.datetime.fromtimestamp(s/1000).strftime('%Y-%m-%d %H:%M:%S.%f')
-# with an array:
-time = datetime.apply(lambda x: datetime.fromtimestamp(x/1000.0))
-"""

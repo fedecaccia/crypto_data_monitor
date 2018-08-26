@@ -1,0 +1,26 @@
+# start:
+sudo service mongodb start
+
+# stop:
+sudo service mongodb stop
+
+# reinit:
+sudo service mongodb restart
+
+# status:
+sudo service mongodb status
+
+# shell
+mongo
+
+# [shell] show dbs:
+show dbs
+
+# [shell] switch to db  "orderbook":
+use orderbook
+
+# [shell] delete curent db  "orderbook":
+db.dropDatabase()
+
+# [terminal] delete db "orderbook":
+mongo orderbook --eval "db.dropDatabase()"
