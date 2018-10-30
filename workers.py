@@ -31,7 +31,7 @@ class ExchangeWorker(Thread):
             raise ValueError("Invalid database_type: '"+database_type+"'.")
 
         if data_type.lower() == "candles":
-            self.data = Candles(exchange, self.client, mutex, barrier, db)
+            self.data = Candles(exchange, self.client, mutex, barrier, db, symbols)
         elif data_type.lower() == "orderbook":
             self.data = OrderBook(exchange, self.client, mutex, barrier, db)
         else:

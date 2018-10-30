@@ -41,14 +41,14 @@ class Candles(Getter):
     This way, we standarize the request.
     """
 
-    def __init__(self, exchange, client, mutex, barrier, db):
+    def __init__(self, exchange, client, mutex, barrier, db, symbols):
         super(Candles, self).__init__(exchange, client, mutex, barrier, db)
-        self.last_datetime = 0
+        self.last_datetime = {symbol:0 for symbol in symbols}
 
     def request(self, symbol):
 
         self.synchronize()
-        n_candles = 10
+        n_candles = 1000
         
         try:            
             candles = self.client.fetch_ohlcv(symbol=symbol, 
@@ -64,21 +64,22 @@ class Candles(Getter):
             self.last_request_time = time.time()
             candles = None
             print("WARNING: DDOS Protection. ERROR rate limit.")
-        except:
+        except Exception as e:
+            print(e)
             # print("symbol: "+symbol+" not listed or request limit reached in: "+self.exchange)
             candles = None
             pass
         else:
             # remove old values
             for t in candles.transpose()[0]:
-                if t <= self.last_datetime:
+                if t <= self.last_datetime[symbol]:
                     candles = np.delete(candles, 0, 0)
                        
             # if new values
             if len(candles)>0:
 
                 # update last datetime
-                self.last_datetime = candles[-1][0]
+                self.last_datetime[symbol] = candles[-1][0]
                 
                 for candle in candles:
                     data = {"datetime": datetime.fromtimestamp(candle[0]/1000).strftime('%Y-%m-%d %H:%M:%S.%f'),
